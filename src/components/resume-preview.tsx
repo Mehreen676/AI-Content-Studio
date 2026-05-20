@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 interface ResumeData {
   personalInfo: {
     name: string; email: string; phone: string; location: string;
-    linkedin: string; website: string; summary: string;
+    linkedin: string; website: string; summary: string; photo: string;
   }
   experience: Array<{
     company: string; title: string; startDate: string; endDate: string;
@@ -33,12 +33,23 @@ function ProfessionalTemplate({ data }: Props) {
     <div className="bg-white text-gray-900 rounded-lg shadow-lg overflow-hidden" style={{ minHeight: '600px' }}>
       {/* Header */}
       <div className="bg-emerald-800 text-white px-8 py-6">
-        <h1 className="text-2xl font-bold">{p.name || 'Your Name'}</h1>
-        <div className="flex flex-wrap gap-3 mt-2 text-emerald-100 text-xs">
-          {p.email && <span>{p.email}</span>}
-          {p.phone && <span>{p.phone}</span>}
-          {p.location && <span>{p.location}</span>}
-          {p.linkedin && <span>{p.linkedin}</span>}
+        <div className="flex items-center gap-5">
+          {p.photo && (
+            <img
+              src={p.photo}
+              alt={p.name || 'Profile'}
+              className="h-16 w-16 rounded-full object-cover border-2 border-emerald-400 flex-shrink-0"
+            />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold">{p.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap gap-3 mt-2 text-emerald-100 text-xs">
+              {p.email && <span>{p.email}</span>}
+              {p.phone && <span>{p.phone}</span>}
+              {p.location && <span>{p.location}</span>}
+              {p.linkedin && <span>{p.linkedin}</span>}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -137,7 +148,18 @@ function ModernTemplate({ data }: Props) {
       <div className="flex">
         {/* Sidebar */}
         <div className="w-1/3 bg-teal-700 text-white px-5 py-6 space-y-5">
-          <div>
+          <div className="flex flex-col items-center text-center">
+            {p.photo ? (
+              <img
+                src={p.photo}
+                alt={p.name || 'Profile'}
+                className="h-20 w-20 rounded-full object-cover border-2 border-teal-400 mb-2"
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-teal-600 flex items-center justify-center mb-2">
+                <span className="text-2xl font-bold">{(p.name || 'U')[0].toUpperCase()}</span>
+              </div>
+            )}
             <h1 className="text-xl font-bold">{p.name || 'Your Name'}</h1>
             {p.summary && <p className="text-xs text-teal-100 mt-2 leading-relaxed">{p.summary}</p>}
           </div>
@@ -236,6 +258,13 @@ function MinimalTemplate({ data }: Props) {
   return (
     <div className="bg-white text-gray-900 rounded-lg shadow-lg px-10 py-8 space-y-6" style={{ minHeight: '600px' }}>
       <div className="text-center border-b border-gray-200 pb-5">
+        {p.photo && (
+          <img
+            src={p.photo}
+            alt={p.name || 'Profile'}
+            className="h-20 w-20 rounded-full object-cover border-2 border-gray-200 mx-auto mb-3"
+          />
+        )}
         <h1 className="text-3xl font-light tracking-wide">{p.name || 'Your Name'}</h1>
         <div className="flex justify-center flex-wrap gap-3 mt-2 text-xs text-gray-500">
           {p.email && <span>{p.email}</span>}

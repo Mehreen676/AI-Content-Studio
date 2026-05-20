@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import {
   Sparkles, Plus, Trash2, ArrowLeft, ArrowRight, Loader2,
-  User, Briefcase, GraduationCap, Wrench, FolderOpen, Award
+  User, Briefcase, GraduationCap, Wrench, FolderOpen, Award,
+  Camera, Upload, X
 } from 'lucide-react'
 import { toast } from 'sonner'
 import ResumePreview from './resume-preview'
@@ -28,7 +29,7 @@ const STEPS = [
 
 interface PersonalInfo {
   name: string; email: string; phone: string; location: string;
-  linkedin: string; website: string; summary: string;
+  linkedin: string; website: string; summary: string; photo: string;
 }
 
 interface Experience {
@@ -55,7 +56,7 @@ interface Certification {
 
 const defaultPersonal: PersonalInfo = {
   name: '', email: '', phone: '', location: '',
-  linkedin: '', website: '', summary: '',
+  linkedin: '', website: '', summary: '', photo: '',
 }
 
 export default function ResumeBuilder() {
@@ -74,6 +75,45 @@ export default function ResumeBuilder() {
   const [certifications, setCertifications] = useState<Certification[]>([])
 
   const [aiLoading, setAiLoading] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error(data.error || 'Upload failed')
+        return
+      }
+
+      setPersonal({ ...personal, photo: data.url })
+      toast.success('Photo uploaded!')
+    } catch {
+      toast.error('Failed to upload image')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleRemovePhoto = () => {
+    setPersonal({ ...personal, photo: '' })
+  }
 
   // Load existing resume
   useEffect(() => {
@@ -267,6 +307,54 @@ export default function ResumeBuilder() {
                 <CardTitle>Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Photo Upload - Optional */}
+                <div className="flex flex-col items-center gap-3 pb-4">
+                  <div className="relative group">
+                    {personal.photo ? (
+                      <div className="relative">
+                        <img
+                          src={personal.photo}
+                          alt="Profile"
+                          className="h-24 w-24 rounded-full object-cover border-2 border-emerald-200 dark:border-emerald-800"
+                        />
+                        <button
+                          onClick={handleRemovePhoto}
+                          className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted border-2 border-dashed border-muted-foreground/30">
+                        <Camera className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="photo-upload"
+                      className="cursor-pointer inline-flex items-center gap-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-colors"
+                    >
+                      {uploading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Upload className="h-3.5 w-3.5" />
+                      )}
+                      {personal.photo ? 'Change Photo' : 'Upload Photo'}
+                    </label>
+                    <input
+                      id="photo-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Optional. Max 2MB. JPG, PNG, WebP.</p>
+                </div>
+
+                <Separator />
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Full Name</Label>
