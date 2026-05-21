@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ResumeAI - AI-Powered Resume Builder & ATS Optimizer",
-  description: "Build ATS-optimized resumes with AI. Generate professional content, check ATS compatibility, and create cover letters — all in one place.",
-  keywords: ["resume builder", "ATS optimizer", "AI resume", "cover letter generator", "job application"],
+  title: "ContentAI - AI-Powered Content Creation Studio",
+  description: "Generate blog posts, social media content, ad copy, emails, product descriptions, and SEO content with AI. Professional quality in seconds.",
+  keywords: ["content generator", "AI writer", "blog generator", "social media content", "ad copy", "email templates", "SEO content"],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },

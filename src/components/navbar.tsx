@@ -1,20 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
-import { useTheme } from 'next-themes'
-import {
-  FileText,
-  LayoutDashboard,
-  Shield,
-  PenTool,
-  Menu,
-  X,
-  Sun,
-  Moon,
-  LogOut,
-  User
-} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,66 +11,88 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { motion, AnimatePresence } from 'framer-motion'
-
-const navItems = [
-  { view: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-  { view: 'builder' as const, label: 'Builder', icon: FileText },
-  { view: 'ats-checker' as const, label: 'ATS Check', icon: Shield },
-  { view: 'cover-letter' as const, label: 'Cover Letter', icon: PenTool },
-]
+import {
+  PenTool,
+  Moon,
+  Sun,
+  Menu,
+  X,
+  LayoutDashboard,
+  FileText,
+  Sparkles,
+  BookTemplate,
+  LogOut,
+  History,
+} from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 export default function Navbar() {
-  const {
-    currentUser, currentView, isMobileMenuOpen,
-    setView, openAuth, logout, setMobileMenuOpen
-  } = useAppStore()
+  const { user, isAuthenticated, setCurrentView, setAuthDialogOpen, logout } = useAppStore()
   const { theme, setTheme } = useTheme()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const navItems = isAuthenticated
+    ? [
+        { label: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
+        { label: 'Create', icon: Sparkles, view: 'generator' as const },
+        { label: 'Templates', icon: BookTemplate, view: 'templates' as const },
+        { label: 'History', icon: History, view: 'history' as const },
+      ]
+    : [
+        { label: 'Features', view: 'landing' as const },
+        { label: 'Pricing', view: 'landing' as const },
+      ]
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <button
-            onClick={() => setView(currentUser ? 'dashboard' : 'landing')}
-            className="flex items-center gap-2 text-xl font-bold"
+            onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'landing')}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-bold">
-              R
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+              <PenTool className="h-5 w-5" />
             </div>
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              ResumeAI
+            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              ContentAI
             </span>
           </button>
 
           {/* Desktop Nav */}
-          {currentUser && (
-            <div className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = currentView === item.view
-                return (
-                  <button
-                    key={item.view}
-                    onClick={() => setView(item.view)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          <div className="hidden md:flex items-center gap-1">
+            {isAuthenticated ? (
+              navItems.map((item) => (
+                <Button
+                  key={item.label}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCurrentView(item.view)
+                  }}
+                  className="gap-2"
+                >
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  {item.label}
+                </Button>
+              ))
+            ) : (
+              navItems.map((item) => (
+                <Button
+                  key={item.label}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentView(item.view)}
+                >
+                  {item.label}
+                </Button>
+              ))
+            )}
+          </div>
 
-          {/* Right side */}
+          {/* Right Side */}
           <div className="flex items-center gap-2">
-            {/* Theme toggle */}
             <Button
               variant="ghost"
               size="icon"
@@ -93,40 +103,51 @@ export default function Navbar() {
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
-            {currentUser ? (
+            {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="hidden md:flex items-center gap-2">
-                    <Avatar className="h-7 w-7">
-                      <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-xs">
-                        {currentUser.name?.[0]?.toUpperCase() || currentUser.email[0].toUpperCase()}
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm">
+                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{currentUser.name || currentUser.email.split('@')[0]}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center gap-2 p-2">
+                    <div>
+                      <p className="text-sm font-medium">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setCurrentView('dashboard')}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setCurrentView('generator')}>
+                    <Sparkles className="mr-2 h-4 w-4" /> Create Content
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setCurrentView('templates')}>
+                    <BookTemplate className="mr-2 h-4 w-4" /> Templates
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" onClick={() => openAuth('login')}>
+                <Button variant="ghost" size="sm" onClick={() => setAuthDialogOpen(true)}>
                   Login
                 </Button>
                 <Button
-                  onClick={() => openAuth('signup')}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                  size="sm"
+                  onClick={() => setAuthDialogOpen(true)}
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
                 >
-                  Sign Up Free
+                  Get Started Free
                 </Button>
               </div>
             )}
@@ -135,70 +156,50 @@ export default function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden h-9 w-9"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-t border-border md:hidden overflow-hidden"
-          >
-            <div className="px-4 py-3 space-y-1">
-              {currentUser ? (
-                <>
-                  {navItems.map((item) => {
-                    const Icon = item.icon
-                    const isActive = currentView === item.view
-                    return (
-                      <button
-                        key={item.view}
-                        onClick={() => { setView(item.view); setMobileMenuOpen(false) }}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-                          isActive
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
-                            : 'text-muted-foreground hover:bg-muted'
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                        {item.label}
-                      </button>
-                    )
-                  })}
-                  <button
-                    onClick={() => { logout(); setMobileMenuOpen(false) }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <div className="space-y-2 pt-2">
-                  <Button variant="outline" className="w-full" onClick={() => { openAuth('login'); setMobileMenuOpen(false) }}>
-                    Login
-                  </Button>
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t py-3 space-y-1">
+            {isAuthenticated ? (
+              <>
+                {navItems.map((item) => (
                   <Button
-                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                    onClick={() => { openAuth('signup'); setMobileMenuOpen(false) }}
+                    key={item.label}
+                    variant="ghost"
+                    className="w-full justify-start gap-2"
+                    onClick={() => {
+                      setCurrentView(item.view)
+                      setMobileMenuOpen(false)
+                    }}
                   >
-                    Sign Up Free
+                    {item.icon && <item.icon className="h-4 w-4" />}
+                    {item.label}
                   </Button>
-                </div>
-              )}
-            </div>
-          </motion.div>
+                ))}
+              </>
+            ) : (
+              <div className="space-y-2 pt-2">
+                <Button
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+                  onClick={() => {
+                    setAuthDialogOpen(true)
+                    setMobileMenuOpen(false)
+                  }}
+                >
+                  Get Started Free
+                </Button>
+              </div>
+            )}
+          </div>
         )}
-      </AnimatePresence>
+      </div>
     </nav>
   )
 }

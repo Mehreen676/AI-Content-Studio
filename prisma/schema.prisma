@@ -11,50 +11,39 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String?
-  image         String?
-  plan          String         @default("free") // free, pro
-  resumes       Resume[]
-  coverLetters  CoverLetter[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  image     String?
+  plan      String    @default("free") // free, pro, enterprise
+  contents  Content[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
-model Resume {
-  id            String        @id @default(cuid())
-  userId        String
-  title         String
-  template      String        @default("professional") // professional, modern, minimal
-  personalInfo  String        // JSON: {name, email, phone, location, linkedin, website, summary}
-  experience    String        // JSON array: [{company, title, startDate, endDate, current, description}]
-  education     String        // JSON array: [{institution, degree, field, startDate, endDate, gpa}]
-  skills        String        // JSON array: [{category, items: []}]
-  projects      String        // JSON array: [{name, description, url, technologies}]
-  certifications String       // JSON array: [{name, issuer, date, url}]
-  languages     String        // JSON array: [{name, proficiency}]
-  atsScore      Int?
-  atsFeedback   String?       // JSON: {keywords, suggestions, scoreBreakdown}
-  isPublic      Boolean       @default(false)
-  slug          String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+model Content {
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  type       String   // blog, social, ad, email, product, seo
+  body       String   // the generated content
+  tone       String   @default("professional") // professional, casual, witty, formal, friendly, persuasive
+  metadata   String   @default("{}") // JSON: {keywords, wordCount, platform, targetAudience, etc.}
+  isFavorite Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model CoverLetter {
-  id            String        @id @default(cuid())
-  userId        String
-  resumeId      String?
-  title         String
-  companyName   String?
-  jobTitle      String?
-  content       String
-  tone          String        @default("professional") // professional, casual, enthusiastic
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // blog, social, ad, email, product, seo
+  category    String   // marketing, business, creative, technical
+  description String
+  prompt      String   // the template prompt with placeholders
+  icon        String   @default("FileText") // lucide icon name
+  isDefault   Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }

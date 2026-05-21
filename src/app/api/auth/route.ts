@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json()
-    const { action, email, name } = body
+    const { email, password, name, action } = await request.json()
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
     if (action === 'signup') {
       const existing = await db.user.findUnique({ where: { email } })
       if (existing) {
-        return NextResponse.json({ error: 'User already exists' }, { status: 400 })
+        return NextResponse.json({ error: 'Email already exists' }, { status: 400 })
       }
-
       const user = await db.user.create({
-        data: { email, name: name || email.split('@')[0] }
+        data: { email, name: name || email.split('@')[0], plan: 'free' },
       })
-
-      return NextResponse.json({ user })
+      return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name, plan: user.plan } })
     }
 
     if (action === 'login') {
@@ -28,7 +25,7 @@ export async function POST(req: NextRequest) {
       if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
-      return NextResponse.json({ user })
+      return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name, plan: user.plan } })
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })

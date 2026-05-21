@@ -2,27 +2,31 @@
 
 import { useAppStore } from '@/lib/store'
 import Navbar from '@/components/navbar'
-import Landing from '@/components/landing'
 import AuthDialog from '@/components/auth-dialog'
+import Landing from '@/components/landing'
 import Dashboard from '@/components/dashboard'
-import ResumeBuilder from '@/components/resume-builder'
-import AtsChecker from '@/components/ats-checker'
-import CoverLetterGenerator from '@/components/cover-letter'
+import ContentGenerator from '@/components/content-generator'
+import ContentEditor from '@/components/content-editor'
+import TemplatesBrowser from '@/components/templates-browser'
+import ContentHistory from '@/components/content-history'
 
 export default function Home() {
   const { currentView } = useAppStore()
 
   const renderView = () => {
     switch (currentView) {
+      case 'landing':
+        return <Landing />
       case 'dashboard':
         return <Dashboard />
-      case 'builder':
-        return <ResumeBuilder />
-      case 'ats-checker':
-        return <AtsChecker />
-      case 'cover-letter':
-        return <CoverLetterGenerator />
-      case 'landing':
+      case 'generator':
+        return <ContentGenerator />
+      case 'editor':
+        return <ContentEditor />
+      case 'templates':
+        return <TemplatesBrowser />
+      case 'history':
+        return <ContentHistory />
       default:
         return <Landing />
     }
