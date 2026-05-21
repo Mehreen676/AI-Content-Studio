@@ -1,205 +1,105 @@
 'use client'
 
-import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Receipt, Menu, LogOut, LayoutDashboard, FileText, Wallet, Users, BarChart3, Sparkles } from 'lucide-react'
 import {
-  PenTool,
-  Moon,
-  Sun,
-  Menu,
-  X,
-  LayoutDashboard,
-  FileText,
-  Sparkles,
-  BookTemplate,
-  LogOut,
-  History,
-} from 'lucide-react'
-import { useTheme } from 'next-themes'
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+
+const navItems = [
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'invoices', icon: FileText, label: 'Invoices' },
+  { id: 'expenses', icon: Wallet, label: 'Expenses' },
+  { id: 'clients', icon: Users, label: 'Clients' },
+  { id: 'reports', icon: BarChart3, label: 'Reports' },
+  { id: 'ai-assistant', icon: Sparkles, label: 'AI Assistant' },
+] as const
 
 export default function Navbar() {
-  const { user, isAuthenticated, setCurrentView, setAuthDialogOpen, logout } = useAppStore()
-  const { theme, setTheme } = useTheme()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, setUser, setCurrentView, currentView, setSidebarOpen, sidebarOpen } = useAppStore()
 
-  const navItems = isAuthenticated
-    ? [
-        { label: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
-        { label: 'Create', icon: Sparkles, view: 'generator' as const },
-        { label: 'Templates', icon: BookTemplate, view: 'templates' as const },
-        { label: 'History', icon: History, view: 'history' as const },
-      ]
-    : [
-        { label: 'Features', view: 'landing' as const },
-        { label: 'Pricing', view: 'landing' as const },
-      ]
+  if (!user) return null
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <button
-            onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'landing')}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
-              <PenTool className="h-5 w-5" />
+    <>
+      {/* Top Navbar */}
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 glass border-b border-violet-500/10"
+      >
+        <div className="flex items-center justify-between px-4 py-3 max-w-[1600px] mx-auto">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden">
+              <Menu className="w-5 h-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center glow-purple">
+                <Receipt className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-bold gradient-text hidden sm:block">InvoiceFlow</span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              ContentAI
-            </span>
-          </button>
-
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-1">
-            {isAuthenticated ? (
-              navItems.map((item) => (
-                <Button
-                  key={item.label}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setCurrentView(item.view)
-                  }}
-                  className="gap-2"
-                >
-                  {item.icon && <item.icon className="h-4 w-4" />}
-                  {item.label}
-                </Button>
-              ))
-            ) : (
-              navItems.map((item) => (
-                <Button
-                  key={item.label}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentView(item.view)}
-                >
-                  {item.label}
-                </Button>
-              ))
-            )}
           </div>
 
-          {/* Right Side */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="h-9 w-9"
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
-
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm">
-                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="flex items-center gap-2 p-2">
-                    <div>
-                      <p className="text-sm font-medium">{user?.name}</p>
-                      <p className="text-xs text-muted-foreground">{user?.email}</p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setCurrentView('dashboard')}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setCurrentView('generator')}>
-                    <Sparkles className="mr-2 h-4 w-4" /> Create Content
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setCurrentView('templates')}>
-                    <BookTemplate className="mr-2 h-4 w-4" /> Templates
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" /> Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setAuthDialogOpen(true)}>
-                  Login
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9 bg-gradient-to-br from-violet-500 to-pink-500">
+                    <AvatarFallback className="bg-transparent text-white font-bold text-sm">
+                      {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setAuthDialogOpen(true)}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
-                >
-                  Get Started Free
-                </Button>
-              </div>
-            )}
-
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden h-9 w-9"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="glass" align="end">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setUser(null); setCurrentView('landing') }} className="text-red-400 cursor-pointer">
+                  <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+      </motion.header>
 
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t py-3 space-y-1">
-            {isAuthenticated ? (
-              <>
-                {navItems.map((item) => (
-                  <Button
-                    key={item.label}
-                    variant="ghost"
-                    className="w-full justify-start gap-2"
-                    onClick={() => {
-                      setCurrentView(item.view)
-                      setMobileMenuOpen(false)
-                    }}
-                  >
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    {item.label}
-                  </Button>
-                ))}
-              </>
-            ) : (
-              <div className="space-y-2 pt-2">
-                <Button
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
-                  onClick={() => {
-                    setAuthDialogOpen(true)
-                    setMobileMenuOpen(false)
-                  }}
-                >
-                  Get Started Free
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </nav>
+      {/* Sidebar */}
+      <motion.aside
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        className={`fixed left-0 top-0 bottom-0 z-40 w-64 bg-sidebar-background border-r border-sidebar-border pt-16 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <nav className="p-4 space-y-1">
+          {navItems.map((item) => (
+            <motion.button
+              key={item.id}
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => { setCurrentView(item.id as any); setSidebarOpen(false) }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                currentView === item.id
+                  ? 'bg-gradient-to-r from-violet-600/20 to-pink-600/20 text-violet-300 border border-violet-500/20 glow-purple'
+                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.label}
+            </motion.button>
+          ))}
+        </nav>
+      </motion.aside>
+
+      {/* Sidebar overlay for mobile */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+    </>
   )
 }

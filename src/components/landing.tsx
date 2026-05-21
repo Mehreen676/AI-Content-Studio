@@ -1,439 +1,184 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import Scene3D from '@/components/scene-3d'
 import {
-  PenTool,
-  Sparkles,
-  FileText,
-  Megaphone,
-  Mail,
-  ShoppingBag,
-  Search,
-  Zap,
-  Target,
-  BarChart3,
-  ArrowRight,
-  CheckCircle2,
-  Star,
-  Quote,
+  Receipt, Wallet, Users, BarChart3, Sparkles, Shield,
+  Zap, TrendingUp, ArrowRight, CheckCircle2
 } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 const features = [
-  {
-    icon: FileText,
-    title: 'Blog Post Generator',
-    description: 'Create SEO-optimized blog posts with engaging introductions, structured sections, and compelling conclusions in seconds.',
-    color: 'from-emerald-500 to-green-600',
-  },
-  {
-    icon: Sparkles,
-    title: 'Social Media Content',
-    description: 'Generate viral social media posts tailored for each platform — Instagram, Twitter, LinkedIn, and Facebook with hashtags.',
-    color: 'from-pink-500 to-rose-600',
-  },
-  {
-    icon: Megaphone,
-    title: 'Ad Copy Generator',
-    description: 'Write high-converting ad copy using proven frameworks like AIDA, PAS, and BAB for Google and Facebook Ads.',
-    color: 'from-amber-500 to-orange-600',
-  },
-  {
-    icon: Mail,
-    title: 'Email Templates',
-    description: 'Craft professional emails with compelling subject lines, engaging body content, and effective calls-to-action.',
-    color: 'from-sky-500 to-blue-600',
-  },
-  {
-    icon: ShoppingBag,
-    title: 'Product Descriptions',
-    description: 'Write conversion-focused product descriptions that highlight benefits, features, and drive sales.',
-    color: 'from-violet-500 to-purple-600',
-  },
-  {
-    icon: Search,
-    title: 'SEO Content',
-    description: 'Generate search-optimized content with proper keyword placement, meta descriptions, and heading structure.',
-    color: 'from-teal-500 to-cyan-600',
-  },
+  { icon: Receipt, title: 'Invoice Generator', desc: 'Create professional invoices in seconds with AI-powered descriptions', color: 'from-violet-500 to-purple-600' },
+  { icon: Wallet, title: 'Expense Tracking', desc: 'Track expenses by category with smart AI categorization', color: 'from-pink-500 to-rose-600' },
+  { icon: Users, title: 'Client Management', desc: 'Manage clients, view history, and track payment status', color: 'from-orange-500 to-amber-600' },
+  { icon: BarChart3, title: 'Financial Reports', desc: 'Visual charts and insights for revenue, expenses, and profit', color: 'from-teal-500 to-emerald-600' },
+  { icon: Sparkles, title: 'AI Assistant', desc: 'Generate invoice descriptions, categorize expenses, get financial insights', color: 'from-blue-500 to-indigo-600' },
+  { icon: Shield, title: 'Payment Tracking', desc: 'Track paid, pending, and overdue invoices at a glance', color: 'from-red-500 to-rose-600' },
 ]
 
 const stats = [
-  { label: 'Content Generated', value: '50K+' },
-  { label: 'Active Users', value: '2,500+' },
-  { label: 'Content Types', value: '6+' },
-  { label: 'Avg. Time Saved', value: '80%' },
-]
-
-const testimonials = [
-  {
-    name: 'Sarah Johnson',
-    role: 'Content Manager',
-    content: 'ContentAI has completely transformed our content workflow. What used to take hours now takes minutes. The blog post generator alone saves our team 15+ hours per week.',
-    rating: 5,
-  },
-  {
-    name: 'Mike Chen',
-    role: 'Marketing Director',
-    content: 'The ad copy generator is incredibly good. We\'ve seen a 40% improvement in our ad click-through rates since switching to AI-generated copy. The AIDA and PAS frameworks are game-changers.',
-    rating: 5,
-  },
-  {
-    name: 'Emily Rodriguez',
-    role: 'Freelance Writer',
-    content: 'As a freelancer, ContentAI helps me deliver more projects in less time. The tone customization is spot-on, and the content quality is consistently impressive. My clients love the results.',
-    rating: 5,
-  },
-]
-
-const pricingPlans = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    features: ['5 content generations/month', 'Blog & social media types', 'Basic tone options', 'Content history'],
-    cta: 'Get Started',
-    popular: false,
-  },
-  {
-    name: 'Pro',
-    price: '$19',
-    period: '/month',
-    features: [
-      'Unlimited generations',
-      'All content types',
-      'Advanced tone & style',
-      'Content improvement tools',
-      'Export to PDF/Word',
-      'Priority support',
-    ],
-    cta: 'Start Pro Trial',
-    popular: true,
-  },
-  {
-    name: 'Enterprise',
-    price: '$49',
-    period: '/month',
-    features: [
-      'Everything in Pro',
-      'Team collaboration',
-      'Custom templates',
-      'API access',
-      'Brand voice training',
-      'Dedicated support',
-    ],
-    cta: 'Contact Sales',
-    popular: false,
-  },
+  { label: 'Invoices Created', value: '10K+' },
+  { label: 'Users', value: '2.5K+' },
+  { label: 'Money Tracked', value: '$5M+' },
+  { label: 'Time Saved', value: '80%' },
 ]
 
 export default function Landing() {
-  const { setAuthDialogOpen, setCurrentView } = useAppStore()
+  const { setCurrentView } = useAppStore()
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 sm:py-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-teal-50/30 to-transparent dark:from-emerald-950/20 dark:via-teal-950/10" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Badge className="mb-6 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 px-4 py-1.5">
-              <Zap className="h-3.5 w-3.5 mr-1.5" />
-              AI-Powered Content Creation
-            </Badge>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              Create Stunning Content
-              <br />
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                10x Faster with AI
-              </span>
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg sm:text-xl text-muted-foreground mb-10">
-              Generate blog posts, social media content, ad copy, emails, product descriptions, and
-              SEO content — all with the power of AI. Professional quality in seconds, not hours.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="lg"
-                onClick={() => setAuthDialogOpen(true)}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 h-12 text-base"
-              >
-                Start Creating for Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => setCurrentView('templates')}
-                className="px-8 h-12 text-base"
-              >
-                View Templates
-              </Button>
-            </div>
-          </motion.div>
+    <div className="min-h-screen overflow-hidden relative">
+      <Scene3D />
 
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-8 max-w-3xl mx-auto"
-          >
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
+      {/* Navbar */}
+      <motion.nav
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="relative z-10 flex items-center justify-between px-6 py-4 max-w-7xl mx-auto"
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center glow-purple">
+            <Receipt className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-bold gradient-text">InvoiceFlow</span>
         </div>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => setCurrentView('dashboard')}>
+            Login
+          </Button>
+          <Button className="bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 glow-purple text-white border-0" onClick={() => setCurrentView('dashboard')}>
+            Get Started <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      </motion.nav>
+
+      {/* Hero */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-24">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.8 }}
+          className="text-center max-w-4xl mx-auto"
+        >
+          <Badge className="mb-6 bg-violet-500/20 text-violet-300 border-violet-500/30 px-4 py-1.5 text-sm">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> AI-Powered Finance Management
+          </Badge>
+          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+            Smart Invoices &<br />
+            <span className="gradient-text">Expense Tracking</span>
+          </h1>
+          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            Create professional invoices, track expenses, manage clients, and get AI-powered financial insights — all in one beautiful platform.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white border-0 text-lg px-8 py-6 glow-purple"
+              onClick={() => setCurrentView('dashboard')}
+            >
+              Start Free <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-violet-500/30 hover:bg-violet-500/10">
+              <Zap className="w-5 h-5 mr-2 text-violet-400" /> Watch Demo
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Stats */}
+        <motion.div
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 max-w-3xl mx-auto"
+        >
+          {stats.map((stat, i) => (
+            <motion.div key={stat.label} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.8 + i * 0.1 }}>
+              <Card className="glass text-center py-4 hover:glow-purple transition-all duration-300">
+                <CardContent className="p-0">
+                  <p className="text-2xl md:text-3xl font-bold gradient-text">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Everything You Need to Create
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                {' '}Amazing Content
-              </span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Six powerful AI generators, one simple platform. Create any type of content with
-              professional quality and consistent brand voice.
-            </p>
-          </div>
+      {/* Features */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Everything You Need to <span className="gradient-text">Manage Finances</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Powerful tools with AI intelligence to streamline your invoicing and expense management workflow.
+          </p>
+        </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <Card className="h-full hover:shadow-lg transition-all duration-300 border-0 bg-background/80 backdrop-blur group">
-                  <CardContent className="p-6">
-                    <div
-                      className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.color} text-white mb-4 group-hover:scale-110 transition-transform`}
-                    >
-                      <feature.icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three simple steps to create professional content in seconds
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              {
-                step: '01',
-                title: 'Choose Content Type',
-                desc: 'Select from blog posts, social media, ad copy, emails, product descriptions, or SEO content.',
-                icon: Target,
-              },
-              {
-                step: '02',
-                title: 'Customize & Generate',
-                desc: 'Set your topic, tone, keywords, and target audience. Our AI creates tailored content instantly.',
-                icon: Sparkles,
-              },
-              {
-                step: '03',
-                title: 'Edit & Export',
-                desc: 'Refine with AI-powered tools, save to your library, and export in your preferred format.',
-                icon: BarChart3,
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.15 }}
-                className="text-center"
-              >
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white mb-4">
-                  <item.icon className="h-7 w-7" />
-                </div>
-                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">
-                  STEP {item.step}
-                </p>
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <p className="text-muted-foreground text-sm">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Loved by Creators</h2>
-            <p className="text-lg text-muted-foreground">
-              See what content creators and marketers are saying
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-              >
-                <Card className="h-full border-0 bg-background/80 backdrop-blur">
-                  <CardContent className="p-6">
-                    <div className="flex gap-0.5 mb-3">
-                      {Array.from({ length: t.rating }).map((_, j) => (
-                        <Star key={j} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                    <Quote className="h-5 w-5 text-muted-foreground/30 mb-2" />
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t.content}</p>
-                    <div>
-                      <p className="text-sm font-semibold">{t.name}</p>
-                      <p className="text-xs text-muted-foreground">{t.role}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-lg text-muted-foreground">
-              Start free, upgrade when you need more power
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {pricingPlans.map((plan, i) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-              >
-                <Card
-                  className={`h-full relative ${
-                    plan.popular
-                      ? 'border-2 border-emerald-500 shadow-lg shadow-emerald-500/10'
-                      : 'border-0 bg-background/80'
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-0 px-3">
-                        Most Popular
-                      </Badge>
-                    </div>
-                  )}
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-1">{plan.name}</h3>
-                    <div className="flex items-baseline gap-1 mb-4">
-                      <span className="text-4xl font-bold">{plan.price}</span>
-                      <span className="text-muted-foreground text-sm">{plan.period}</span>
-                    </div>
-                    <ul className="space-y-3 mb-6">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2 text-sm">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className={`w-full ${
-                        plan.popular
-                          ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white'
-                          : ''
-                      }`}
-                      variant={plan.popular ? 'default' : 'outline'}
-                      onClick={() => setAuthDialogOpen(true)}
-                    >
-                      {plan.cta}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, i) => (
+            <motion.div
+              key={feature.title}
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <Card className="glass hover:scale-105 transition-all duration-300 group cursor-pointer h-full">
+                <CardContent className="p-6">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <feature.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm">{feature.desc}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-emerald-600 to-teal-600">
-        <div className="mx-auto max-w-4xl px-4 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Ready to Transform Your Content Creation?
-          </h2>
-          <p className="text-lg text-emerald-100 mb-8">
-            Join thousands of creators who are already using AI to produce better content, faster.
-          </p>
-          <Button
-            size="lg"
-            variant="secondary"
-            onClick={() => setAuthDialogOpen(true)}
-            className="px-8 h-12 text-base"
-          >
-            Start Creating for Free
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t py-12 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
-                <PenTool className="h-4 w-4" />
+      <section className="relative z-10 max-w-4xl mx-auto px-6 py-20">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 1 }}
+          viewport={{ once: true }}
+        >
+          <Card className="glass glow-purple border-violet-500/20">
+            <CardContent className="p-10 text-center">
+              <h2 className="text-3xl font-bold mb-4">Ready to Streamline Your Finances?</h2>
+              <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+                Join thousands of freelancers and small businesses using InvoiceFlow to save time and get paid faster.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                {['Free forever plan', 'No credit card required', 'AI-powered features'].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-green-400" />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
-              <span className="font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                ContentAI
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © 2026 ContentAI. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white border-0 text-lg px-10 py-6 glow-purple"
+                onClick={() => setCurrentView('dashboard')}
+              >
+                <TrendingUp className="w-5 h-5 mr-2" /> Get Started Now
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </section>
     </div>
   )
 }

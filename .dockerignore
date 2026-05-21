@@ -1,8 +1,0 @@
-node_modules
-.next
-.git
-db/*.db
-.env.local
-download/
-examples/
-worklog.md
