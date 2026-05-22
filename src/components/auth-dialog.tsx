@@ -1,96 +1,187 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Receipt, Sparkles } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PenTool, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function AuthDialog() {
-  const { user, setUser, setCurrentView } = useAppStore()
-  const [open, setOpen] = useState(false)
-  const [isLogin, setIsLogin] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { authDialogOpen, setAuthDialogOpen, setUser, setCurrentView } = useAppStore()
+  const [isLoading, setIsLoading] = useState(false)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [signupName, setSignupName] = useState('')
+  const [signupEmail, setSignupEmail] = useState('')
+  const [signupPassword, setSignupPassword] = useState('')
 
-  // Show dialog when user tries to access protected features without login
-  // This is triggered by the dashboard if no user
+  const handleLogin = async () => {
+    if (!loginEmail || !loginPassword) {
+      toast.error('Please fill in all fields')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword, action: 'login' }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        toast.error(data.error)
+        return
+      }
+      setUser(data.user)
+      setAuthDialogOpen(false)
+      setCurrentView('dashboard')
+      toast.success('Welcome back!')
+    } catch {
+      toast.error('Login failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const handleSignup = async () => {
+    if (!signupEmail || !signupPassword || !signupName) {
+      toast.error('Please fill in all fields')
+      return
+    }
+    setIsLoading(true)
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
-          password,
-          name,
-          action: isLogin ? 'login' : 'signup',
+          email: signupEmail,
+          password: signupPassword,
+          name: signupName,
+          action: 'signup',
         }),
       })
       const data = await res.json()
-      if (data.user) {
-        setUser(data.user)
-        setCurrentView('dashboard')
-        setOpen(false)
+      if (data.error) {
+        toast.error(data.error)
+        return
       }
-    } catch (err) {
-      console.error(err)
+      setUser(data.user)
+      setAuthDialogOpen(false)
+      setCurrentView('dashboard')
+      toast.success('Account created! Welcome to ContentAI!')
+    } catch {
+      toast.error('Signup failed')
+    } finally {
+      setIsLoading(false)
     }
-    setLoading(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="glass sm:max-w-md border-violet-500/20">
+    <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
-              <Receipt className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+              <PenTool className="h-5 w-5" />
             </div>
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </DialogTitle>
+            <DialogTitle className="text-xl">ContentAI</DialogTitle>
+          </div>
+          <DialogDescription>
+            Sign in to start creating amazing content with AI
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <AnimatePresence mode="wait">
-            {!isLogin && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                <div className="space-y-2">
-                  <Label>Full Name</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" className="bg-background/50" required />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" className="bg-background/50" required />
-          </div>
-          <div className="space-y-2">
-            <Label>Password</Label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-background/50" required />
-          </div>
-          <Button type="submit" className="w-full bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white border-0" disabled={loading}>
-            <Sparkles className="w-4 h-4 mr-2" />
-            {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}
-          </Button>
-          <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "Don't have an account? " : 'Already have an account? '}
-            <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-violet-400 hover:underline">
-              {isLogin ? 'Sign Up' : 'Sign In'}
-            </button>
-          </p>
-        </form>
+
+        <Tabs defaultValue="login" className="mt-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="login" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="login-email">Email</Label>
+              <Input
+                id="login-email"
+                type="email"
+                placeholder="your@email.com"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-password">Password</Label>
+              <Input
+                id="login-password"
+                type="password"
+                placeholder="Enter your password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+              onClick={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Sign In
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="signup" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="signup-name">Full Name</Label>
+              <Input
+                id="signup-name"
+                placeholder="John Doe"
+                value={signupName}
+                onChange={(e) => setSignupName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signup-email">Email</Label>
+              <Input
+                id="signup-email"
+                type="email"
+                placeholder="your@email.com"
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signup-password">Password</Label>
+              <Input
+                id="signup-password"
+                type="password"
+                placeholder="Create a password"
+                value={signupPassword}
+                onChange={(e) => setSignupPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+              onClick={handleSignup}
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Create Account
+            </Button>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )
 }
-
-export { AuthDialog }

@@ -1,259 +1,363 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { useAppStore } from '@/lib/store'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useEffect, useState } from 'react'
+import { useAppStore, type ContentItem, type ContentType } from '@/lib/store'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDate, getStatusInfo } from '@/lib/utils'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
+import { Input } from '@/components/ui/input'
 import {
-  Receipt, Wallet, Users, TrendingUp, TrendingDown, DollarSign,
-  FileText, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, AlertCircle, Plus
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Sparkles,
+  FileText,
+  Share2,
+  Megaphone,
+  Mail,
+  ShoppingBag,
+  Search,
+  Star,
+  MoreVertical,
+  Trash2,
+  Pencil,
+  Plus,
+  TrendingUp,
+  Clock,
+  Heart,
+  BarChart3,
+  ArrowUpRight,
 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 
-interface Invoice { id: string; number: string; status: string; total: number; issueDate: string; dueDate: string; client: { name: string } }
-interface Expense { id: string; category: string; description: string; amount: number; date: string }
-interface Client { id: string; name: string; email: string }
+const typeIcons: Record<ContentType, typeof FileText> = {
+  blog: FileText,
+  social: Share2,
+  ad: Megaphone,
+  email: Mail,
+  product: ShoppingBag,
+  seo: Search,
+}
 
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } }
-const item = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }
+const typeColors: Record<ContentType, string> = {
+  blog: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  social: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
+  ad: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  email: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+  product: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  seo: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+}
+
+const typeLabels: Record<ContentType, string> = {
+  blog: 'Blog Post',
+  social: 'Social Media',
+  ad: 'Ad Copy',
+  email: 'Email',
+  product: 'Product Description',
+  seo: 'SEO Content',
+}
 
 export default function Dashboard() {
-  const { user, setCurrentView } = useAppStore()
-  const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [loading, setLoading] = useState(true)
+  const { user, contents, setContents, setCurrentView, removeContent, setCurrentContent, setGeneratorType } = useAppStore()
+  const [filter, setFilter] = useState<ContentType | 'all'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) return
-    const fetchData = async () => {
+    const fetchContents = async () => {
+      if (!user) return
       try {
-        const [invRes, expRes, cliRes] = await Promise.all([
-          fetch(`/api/invoice?userId=${user.id}`),
-          fetch(`/api/expense?userId=${user.id}`),
-          fetch(`/api/client?userId=${user.id}`),
-        ])
-        const invData = await invRes.json()
-        const expData = await expRes.json()
-        const cliData = await cliRes.json()
-        if (invData.invoices) setInvoices(invData.invoices)
-        if (expData.expenses) setExpenses(expData.expenses)
-        if (cliData.clients) setClients(cliData.clients)
-      } catch (err) { console.error(err) }
-      setLoading(false)
+        const res = await fetch(`/api/content?userId=${user.id}`)
+        const data = await res.json()
+        if (data.contents) setContents(data.contents)
+      } catch (error) {
+        console.error('Failed to fetch contents:', error)
+      }
     }
-    fetchData()
-  }, [user])
+    fetchContents()
+  }, [user, setContents])
 
-  const totalRevenue = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total, 0)
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
-  const pendingAmount = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + i.total, 0)
-  const overdueAmount = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + i.total, 0)
+  const filteredContents = contents.filter((c) => {
+    const matchesType = filter === 'all' || c.type === filter
+    const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.body.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesType && matchesSearch
+  })
 
-  // Monthly revenue data
-  const monthlyData = [
-    { month: 'Jan', revenue: 4200, expenses: 2800 },
-    { month: 'Feb', revenue: 5100, expenses: 3100 },
-    { month: 'Mar', revenue: 4800, expenses: 2600 },
-    { month: 'Apr', revenue: 6200, expenses: 3400 },
-    { month: 'May', revenue: 5800, expenses: 2900 },
-    { month: 'Jun', revenue: totalRevenue || 7100, expenses: totalExpenses || 3200 },
+  const stats = [
+    {
+      label: 'Total Content',
+      value: contents.length,
+      icon: FileText,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    },
+    {
+      label: 'This Week',
+      value: contents.filter((c) => {
+        const d = new Date(c.createdAt)
+        const now = new Date()
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        return d >= weekAgo
+      }).length,
+      icon: TrendingUp,
+      color: 'text-pink-600',
+      bg: 'bg-pink-50 dark:bg-pink-950/30',
+    },
+    {
+      label: 'Favorites',
+      value: contents.filter((c) => c.isFavorite).length,
+      icon: Heart,
+      color: 'text-amber-600',
+      bg: 'bg-amber-50 dark:bg-amber-950/30',
+    },
+    {
+      label: 'Content Types',
+      value: new Set(contents.map((c) => c.type)).size,
+      icon: BarChart3,
+      color: 'text-violet-600',
+      bg: 'bg-violet-50 dark:bg-violet-950/30',
+    },
   ]
 
-  // Expense breakdown
-  const expenseByCategory = expenses.reduce((acc: Record<string, number>, e) => {
-    acc[e.category] = (acc[e.category] || 0) + e.amount
-    return acc
-  }, {})
-  const pieData = Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }))
-  const PIE_COLORS = ['#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#ef4444', '#22c55e', '#64748b']
+  const handleDelete = async (id: string) => {
+    setDeletingId(id)
+    try {
+      await fetch(`/api/content/${id}`, { method: 'DELETE' })
+      removeContent(id)
+      toast.success('Content deleted')
+    } catch {
+      toast.error('Failed to delete')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
-  const statCards = [
-    { title: 'Total Revenue', value: formatCurrency(totalRevenue), icon: DollarSign, change: '+12.5%', up: true, color: 'from-violet-500 to-purple-600', glow: 'glow-purple' },
-    { title: 'Total Expenses', value: formatCurrency(totalExpenses), icon: Wallet, change: '-3.2%', up: false, color: 'from-pink-500 to-rose-600', glow: 'glow-pink' },
-    { title: 'Pending', value: formatCurrency(pendingAmount), icon: Clock, change: `${invoices.filter(i => i.status === 'sent').length} invoices`, up: true, color: 'from-orange-500 to-amber-600', glow: 'glow-orange' },
-    { title: 'Overdue', value: formatCurrency(overdueAmount), icon: AlertCircle, change: `${invoices.filter(i => i.status === 'overdue').length} invoices`, up: false, color: 'from-red-500 to-rose-600', glow: '' },
-  ]
+  const handleEdit = (content: ContentItem) => {
+    setCurrentContent(content)
+    setCurrentView('editor')
+  }
+
+  const handleToggleFavorite = async (content: ContentItem) => {
+    try {
+      await fetch(`/api/content/${content.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isFavorite: !content.isFavorite }),
+      })
+      useAppStore.getState().updateContent(content.id, { isFavorite: !content.isFavorite })
+    } catch {
+      toast.error('Failed to update')
+    }
+  }
+
+  const handleNewContent = (type: ContentType) => {
+    setGeneratorType(type)
+    setCurrentView('generator')
+  }
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="p-4 lg:p-8 space-y-6 lg:ml-64">
-      {/* Header */}
-      <motion.div variants={item} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
-          <p className="text-muted-foreground mt-1">Here&apos;s your financial overview</p>
-        </div>
-        <div className="flex gap-3">
-          <Button className="bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white border-0 glow-purple" onClick={() => setCurrentView('create-invoice')}>
-            <Plus className="w-4 h-4 mr-2" /> New Invoice
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">
+              Welcome back, {user?.name?.split(' ')[0]}
+            </h1>
+            <p className="text-muted-foreground">Here&apos;s your content overview</p>
+          </div>
+          <Button
+            onClick={() => setCurrentView('generator')}
+            className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white gap-2"
+          >
+            <Plus className="h-4 w-4" /> Create Content
           </Button>
-          <Button variant="outline" className="border-violet-500/30 hover:bg-violet-500/10" onClick={() => setCurrentView('expenses')}>
-            <Wallet className="w-4 h-4 mr-2" /> Add Expense
-          </Button>
         </div>
-      </motion.div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => (
-          <motion.div key={stat.title} variants={item}>
-            <Card className={`glass hover:${stat.glow} transition-all duration-300 hover:scale-105 cursor-pointer`}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
-                    <stat.icon className="w-5 h-5 text-white" />
-                  </div>
-                  <span className={`text-xs font-medium flex items-center gap-1 ${stat.up ? 'text-green-400' : 'text-red-400'}`}>
-                    {stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                    {stat.change}
-                  </span>
-                </div>
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{stat.title}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <motion.div variants={item} className="lg:col-span-2">
-          <Card className="glass">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-violet-400" /> Revenue vs Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={monthlyData}>
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                  <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                  <YAxis stroke="#64748b" fontSize={12} />
-                  <Tooltip contentStyle={{ background: '#1e1b4b', border: '1px solid #8b5cf640', borderRadius: '12px' }} />
-                  <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" fill="url(#revenueGrad)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="expenses" stroke="#ec4899" fill="url(#expenseGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Expense Breakdown */}
-        <motion.div variants={item}>
-          <Card className="glass h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-pink-400" /> Expense Breakdown
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pieData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="value">
-                      {pieData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ background: '#1e1b4b', border: '1px solid #ec489940', borderRadius: '12px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                  No expenses yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Recent Invoices */}
-      <motion.div variants={item}>
-        <Card className="glass">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-orange-400" /> Recent Invoices
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setCurrentView('invoices')} className="text-violet-400 hover:text-violet-300">
-              View All <ArrowUpRight className="w-3 h-3 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {invoices.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Receipt className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No invoices yet. Create your first invoice!</p>
-                <Button className="mt-4 bg-gradient-to-r from-violet-600 to-pink-600 text-white border-0" onClick={() => setCurrentView('create-invoice')}>
-                  <Plus className="w-4 h-4 mr-2" /> Create Invoice
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {invoices.slice(0, 5).map((inv) => {
-                  const status = getStatusInfo(inv.status)
-                  return (
-                    <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-violet-500/5 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-violet-400" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{inv.number}</p>
-                          <p className="text-xs text-muted-foreground">{inv.client?.name || 'Unknown Client'}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(inv.total)}</p>
-                        <Badge variant="outline" style={{ borderColor: status.color, color: status.color }} className="text-[10px]">
-                          {status.label}
-                        </Badge>
-                      </div>
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {stats.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.05 }}
+            >
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`p-2 rounded-lg ${stat.bg}`}>
+                      <stat.icon className={`h-4 w-4 ${stat.color}`} />
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+                  </div>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
 
-      {/* Quick Actions */}
-      <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { icon: FileText, label: 'New Invoice', view: 'create-invoice', color: 'from-violet-500 to-purple-600' },
-          { icon: Wallet, label: 'Add Expense', view: 'expenses', color: 'from-pink-500 to-rose-600' },
-          { icon: Users, label: 'Add Client', view: 'clients', color: 'from-orange-500 to-amber-600' },
-          { icon: BarChart3, label: 'View Reports', view: 'reports', color: 'from-teal-500 to-emerald-600' },
-        ].map((action) => (
-          <motion.div key={action.label} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Card className="glass cursor-pointer hover:glow-purple transition-all duration-300" onClick={() => setCurrentView(action.view as any)}>
-              <CardContent className="p-4 flex flex-col items-center gap-2">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center`}>
-                  <action.icon className="w-5 h-5 text-white" />
+        {/* Quick Create */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Quick Create</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {(Object.keys(typeIcons) as ContentType[]).map((type) => {
+              const Icon = typeIcons[type]
+              return (
+                <button
+                  key={type}
+                  onClick={() => handleNewContent(type)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all"
+                >
+                  <div className={`p-2.5 rounded-lg ${typeColors[type]}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs font-medium text-center">{typeLabels[type]}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Content List */}
+        <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <h2 className="text-lg font-semibold">Recent Content</h2>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Input
+                placeholder="Search content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="sm:w-64"
+              />
+              <div className="flex gap-1 overflow-x-auto">
+                <Button
+                  variant={filter === 'all' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setFilter('all')}
+                >
+                  All
+                </Button>
+                {(Object.keys(typeLabels) as ContentType[]).map((type) => (
+                  <Button
+                    key={type}
+                    variant={filter === type ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setFilter(type)}
+                    className="hidden sm:inline-flex"
+                  >
+                    {typeLabels[type]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {filteredContents.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="p-4 rounded-full bg-muted mb-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <span className="text-xs font-medium">{action.label}</span>
+                <h3 className="font-semibold mb-1">No content yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">Create your first piece of content with AI</p>
+                <Button
+                  onClick={() => setCurrentView('generator')}
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white gap-2"
+                >
+                  <Sparkles className="h-4 w-4" /> Create Content
+                </Button>
               </CardContent>
             </Card>
-          </motion.div>
-        ))}
-      </motion.div>
-    </motion.div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredContents.map((content, i) => {
+                const Icon = typeIcons[content.type as ContentType] || FileText
+                return (
+                  <motion.div
+                    key={content.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.03 }}
+                  >
+                    <Card className="group hover:shadow-md transition-all border-0 shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-md ${typeColors[content.type as ContentType] || ''}`}>
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <Badge variant="secondary" className="text-xs">
+                              {typeLabels[content.type as ContentType] || content.type}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleToggleFavorite(content)}
+                              className="p-1 hover:bg-muted rounded transition-colors"
+                            >
+                              <Star
+                                className={`h-4 w-4 ${
+                                  content.isFavorite
+                                    ? 'fill-amber-400 text-amber-400'
+                                    : 'text-muted-foreground'
+                                }`}
+                              />
+                            </button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="p-1 hover:bg-muted rounded transition-colors">
+                                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(content)}>
+                                  <Pencil className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(content.id)}
+                                  className="text-red-600"
+                                  disabled={deletingId === content.id}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                        <h3 className="font-semibold text-sm mb-2 line-clamp-1">{content.title}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                          {content.body.substring(0, 120)}...
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {new Date(content.updatedAt).toLocaleDateString()}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => handleEdit(content)}
+                          >
+                            Open <ArrowUpRight className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
