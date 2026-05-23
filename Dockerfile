@@ -38,6 +38,9 @@ COPY --from=builder /app/prisma ./prisma
 # Copy the pre-built DB as a template
 COPY --from=builder /app/db/custom.db /app/db/template.db
 
+# Copy z-ai-web-dev-sdk module for AI features
+COPY --from=builder /app/node_modules/z-ai-web-dev-sdk ./node_modules/z-ai-web-dev-sdk
+
 # Startup script: copy template DB if no DB exists, then start server
 RUN echo '#!/bin/sh\n\
 mkdir -p /data/db\n\

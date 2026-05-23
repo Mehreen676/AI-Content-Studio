@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ZAI from 'z-ai-web-dev-sdk'
+import { createChatCompletion } from '@/lib/ai'
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,8 +8,6 @@ export async function POST(request: NextRequest) {
     if (!type || !topic) {
       return NextResponse.json({ error: 'type and topic are required' }, { status: 400 })
     }
-
-    const zai = await ZAI.create()
 
     let systemPrompt = ''
     let userPrompt = ''
@@ -114,20 +112,17 @@ Focus on search intent and readability.`
         userPrompt = `Write content about "${topic}". ${toneInstruction} ${keywordsInstruction} ${extraInstructions}`
     }
 
-    const completion = await zai.chat.completions.create({
-      messages: [
+    const generatedContent = await createChatCompletion(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.8,
-      max_tokens: 4000,
-    })
-
-    const generatedContent = completion.choices[0]?.message?.content || ''
+      { temperature: 0.8, max_tokens: 4000, type, topic }
+    )
 
     return NextResponse.json({ content: generatedContent })
   } catch (error) {
     console.error('AI generation error:', error)
-    return NextResponse.json({ error: 'Failed to generate content' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate content: ' + (error instanceof Error ? error.message : 'Unknown error') }, { status: 500 })
   }
 }

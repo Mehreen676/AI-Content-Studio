@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ZAI from 'z-ai-web-dev-sdk'
+import { createChatCompletion, generateDemoImprovement } from '@/lib/ai'
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,8 +8,6 @@ export async function POST(request: NextRequest) {
     if (!content || !action) {
       return NextResponse.json({ error: 'content and action are required' }, { status: 400 })
     }
-
-    const zai = await ZAI.create()
 
     let systemPrompt = 'You are an expert content editor and copywriter. Improve the given content while maintaining its core message and purpose.'
     let userPrompt = ''
@@ -34,20 +32,22 @@ export async function POST(request: NextRequest) {
         userPrompt = `Improve the following content:\n\n${content}`
     }
 
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 4000,
-    })
-
-    const improvedContent = completion.choices[0]?.message?.content || ''
-
-    return NextResponse.json({ content: improvedContent })
+    try {
+      const improvedContent = await createChatCompletion(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        { temperature: 0.7, max_tokens: 4000 }
+      )
+      return NextResponse.json({ content: improvedContent })
+    } catch {
+      // Fall back to demo improvement if AI service unavailable
+      const demoContent = generateDemoImprovement(content, action)
+      return NextResponse.json({ content: demoContent, demo: true })
+    }
   } catch (error) {
     console.error('AI improve error:', error)
-    return NextResponse.json({ error: 'Failed to improve content' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to improve content: ' + (error instanceof Error ? error.message : 'Unknown error') }, { status: 500 })
   }
 }
